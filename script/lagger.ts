@@ -85,26 +85,25 @@ ${set
 `;
 
 const lagIpCmd = (
-  UP_QUEUE: number,
+  UP_QUEUE_ID: number,
+  OLD_UP_SPEED: number,
   UP_SPEED: number,
-  DOWN_QUEUE: number,
+  DOWN_QUEUE_ID: number,
+  OLD_DOWN_SPEED: number,
   DOWN_SPEED: number
 ) => `
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control advanced-queue leaf queue ${UP_QUEUE}
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control advanced-queue leaf queue ${DOWN_QUEUE}
+
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control advanced-queue leaf queue ${UP_QUEUE_ID} bandwidth ${OLD_UP_SPEED}kbit
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control advanced-queue leaf queue ${DOWN_QUEUE_ID} bandwidth ${OLD_DOWN_SPEED}kbit
 
 # src -> dst
 
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${DOWN_QUEUE} parent 1023
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${DOWN_QUEUE} bandwidth ${DOWN_SPEED}kbit
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${DOWN_QUEUE} queue-type UBNT_BQ_FQ_CODEL
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${DOWN_QUEUE_ID} bandwidth ${DOWN_SPEED}kbit
 
 # dst -> src
 
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${UP_QUEUE} parent 1023
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${UP_QUEUE} bandwidth ${UP_SPEED}kbit
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${UP_QUEUE} queue-type UBNT_BQ_FQ_CODEL
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${UP_QUEUE_ID} bandwidth ${UP_SPEED}kbit
 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper commit
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper save
@@ -136,8 +135,6 @@ export async function fullInstall(
       DOWN_SPEED: downSpeed,
     }))
   );
-  console.log("set", set);
-  console.log("cmd", cmd);
   return ssh
     .exec("bash", {
       args: ["-c", cmd],
@@ -153,17 +150,23 @@ export function lagIp({
   downQueueNumber,
   upSpeed,
   downSpeed,
+  oldDownSpeed,
+  oldUpSpeed,
 }: {
   upQueueNumber: number;
   downQueueNumber: number;
   upSpeed: number;
   downSpeed: number;
+  oldUpSpeed: number;
+  oldDownSpeed: number;
 }) {
+  const cmd = lagIpCmd(upQueueNumber, oldUpSpeed, upSpeed, downQueueNumber, oldDownSpeed, downSpeed);
+  console.log(cmd);
   return ssh
     .exec("bash", {
       args: [
         "-c",
-        lagIpCmd(upQueueNumber, upSpeed, downQueueNumber, downSpeed),
+        cmd,
       ],
       out: function (stdout) {
         console.log(stdout);
@@ -182,10 +185,12 @@ const mode = process.argv[2];
       break;
     case "lagIp":
       const upQueueNumber = +process.argv[3];
-      const upSpeed = +process.argv[4];
-      const downQueueNumber = +process.argv[5];
-      const downSpeed = +process.argv[6];
-      lagIp({ upQueueNumber, downQueueNumber, upSpeed, downSpeed });
+      const oldUpSpeed = +process.argv[4];
+      const upSpeed = +process.argv[5];
+      const downQueueNumber = +process.argv[6];
+      const oldDownSpeed = +process.argv[7];
+      const downSpeed = +process.argv[8];
+      lagIp({ upQueueNumber, downQueueNumber, upSpeed, downSpeed, oldDownSpeed, oldUpSpeed });
       break;
     case "fullInstall":
       const set = [];

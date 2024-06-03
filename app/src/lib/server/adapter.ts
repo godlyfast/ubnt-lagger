@@ -177,11 +177,28 @@ export async function fullInstall(
   };
 }
 
-export async function lagIp(ip: string, upSpeed: number, downSpeed: number) {
+export async function lagIp({
+  upQueueId,
+  upSpeed,
+  downSpeed,
+  downQueueId,
+  oldDownSpeed,
+  oldUpSpeed,
+}: {
+  upQueueId: number;
+  upSpeed: number;
+  downSpeed: number;
+  downQueueId: number;
+  oldDownSpeed: number;
+  oldUpSpeed: number;
+}) {
   const { outData, errData, exitCode } = await execute([
     "lagIp",
-    ip,
+    upQueueId.toString(),
+    oldUpSpeed.toString(),
     upSpeed.toString(),
+    downQueueId.toString(),
+    oldDownSpeed.toString(),
     downSpeed.toString(),
   ]);
 

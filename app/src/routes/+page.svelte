@@ -1,72 +1,114 @@
 <script lang="ts">
   import JSONTree from "svelte-json-tree";
-  import { lag, showConfig, unLag } from "$lib/lag";
+  import { lagIp, fullDell, fullInstall, showConfig } from "$lib/lag";
   import type { PageData } from "./$types";
 
   export let data: PageData;
+  export let entries: {
+    ip: string;
+    upSpeed: number;
+    downSpeed: number;
+  }[] = JSON.parse(JSON.stringify(data.entries));
 
-  let lagRequestInProcess = false;
-  let unLagRequestInProcess = false;
+  $: entries = JSON.parse(JSON.stringify(data.entries));
+
+  let requestInProcess = false;
 
   async function updateConfig() {
-    const {data: conf} = await showConfig();
-    data = {...data, entries: conf};
-    console.log("Upd Conf", data.entries);
+    requestInProcess = true;
+    const { data: conf } = await showConfig();
+    data = { ...data, entries: conf };
+    requestInProcess = false;
   }
 
-  async function handleUnLagClick(entry: any) {
-    data.entries = data.entries?.filter((e: any) => e.ip !== entry.ip);
-  }
+  async function handleUnLagClick(entry: any) {}
 
   async function addEntry() {
-    data.entries = [...data.entries, { ip: "", upSpeed: 100, downSpeed: 1000 }];
+    entries = [...entries, { ip: "", upSpeed: 500000, downSpeed: 500000 }];
   }
-  $: ({ entries } = data);
 
-  async function handleLagClick({ip, upSpeed, downSpeed}: {ip: string, upSpeed: number, downSpeed: number}) {
-    if (lagRequestInProcess) {
+  async function handleLagAllClick(
+    set: { ip: string; upSpeed: number; downSpeed: number }[]
+  ) {
+    if (requestInProcess) {
       return;
     }
-    lagRequestInProcess = true;
-    const r = await lag({ ip, upSpeed, downSpeed });
+    requestInProcess = true;
+    const fi = await fullInstall(set);
+    console.log(fi);
     await updateConfig();
-    lagRequestInProcess = false;
+    requestInProcess = false;
   }
-  async function handleUnLagAllClick() {
-    if (unLagRequestInProcess) {
+
+  async function handleLagClick({
+    upSpeed,
+    downSpeed,
+    ip,
+  }: {
+    upSpeed: number;
+    downSpeed: number;
+    ip: string;
+  }) {
+    if (requestInProcess) {
       return;
     }
-    unLagRequestInProcess = true;
-    const r = await unLag();
+    requestInProcess = true;
+    const {
+      downSpeed: oldDownSpeed,
+      upSpeed: oldUpSpeed,
+      upQueueId,
+      downQueueId,
+    } = data.entries.find((e: any) => e.ip === ip);
+    const r = await lagIp({
+      upQueueId,
+      downQueueId,
+      upSpeed,
+      downSpeed,
+      oldDownSpeed,
+      oldUpSpeed,
+    });
     console.log(r);
     await updateConfig();
-    unLagRequestInProcess = false;
+    requestInProcess = false;
+  }
+  async function handleUnLagAllClick() {
+    if (requestInProcess) {
+      return;
+    }
+    requestInProcess = true;
+    const r = await fullDell();
+    console.log(r);
+    await updateConfig();
+    requestInProcess = false;
   }
 </script>
 
 <h1>UBNT Lagger</h1>
-{#each data.entries.length ? data.entries : [{ip: '192.168.55.69', upSpeed: 100, downSpeed: 1000}] as entry}
+{#each entries as entry}
   <input type="text" placeholder="ip" bind:value={entry.ip} />
   <label for="downSpeed">Rate</label>
   <input type="number" placeholder="downSpeed" bind:value={entry.downSpeed} />
   <label for="upSpeed">Reverse Rate</label>
   <input type="number" placeholder="upSpeed" bind:value={entry.upSpeed} />
-  <button
-    disabled={lagRequestInProcess || unLagRequestInProcess}
-    on:click={() => handleLagClick(entry)}>LAG IP</button
+  <button disabled={requestInProcess} on:click={() => handleLagClick(entry)}
+    >SET LAG</button>
+  <button disabled={requestInProcess} on:click={() => handleLagClick({...entry, downSpeed: 500, upSpeed: 500})}
+    >LAG</button
   >
-  <button
-    disabled={lagRequestInProcess || unLagRequestInProcess}
-    on:click={() => handleUnLagClick(entry)}>UNLAG</button>
+  <button disabled={requestInProcess} on:click={() => handleLagClick({...entry, downSpeed: 500000, upSpeed: 500000})}
+    >UN_LAG</button
+  >
   <br />
 {/each}
 <br />
+<button disabled={requestInProcess} on:click={updateConfig}>REFRESH</button>
+<button disabled={requestInProcess} on:click={addEntry}>ADD Entry</button>
 <button
-  disabled={unLagRequestInProcess || lagRequestInProcess}
-  on:click={addEntry}>ADD Entry</button>
-<button
-  disabled={unLagRequestInProcess || lagRequestInProcess}
-  on:click={handleUnLagAllClick}>UNLAG ALL</button
+  disabled={requestInProcess}
+  on:click={() => handleLagAllClick(entries)}>LAG ALL</button
+>
+<button disabled={requestInProcess} on:click={handleUnLagAllClick}
+  >UN_LAG ALL</button
 >
 <JSONTree
   shouldShowPreview={false}
