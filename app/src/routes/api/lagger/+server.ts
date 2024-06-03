@@ -24,7 +24,7 @@ export const GET: RequestHandler = async ({ url }) => {
                         
         const records: any = {};
         const matchesKeys = Object.keys(matches || {});
-        
+
         for (let i = 0; i < matchesKeys.length; i++) {
           const key = matchesKeys[i];
           const match = matches[key];
@@ -47,7 +47,6 @@ export const GET: RequestHandler = async ({ url }) => {
         outData = conf.outData;
         errData = conf.errData;
         exitCode = conf.exitCode;
-        console.log("records", records);
         data = Object.values(records || {});
         break;
       case "lagIp":
