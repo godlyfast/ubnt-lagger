@@ -24,7 +24,6 @@
 	"type": "module",
 	"dependencies": {
 		"g2-bracket-parser": "^2.0.0",
-		"json5": "^2.2.3",
 		"merge-deep": "^3.0.3",
 		"svelte-json-tree": "^2.2.0"
 	}
