@@ -130,21 +130,17 @@ async function execute(args: string[]) {
       `cd ../script && npm run lagger ${args.join(" ")}`
     );
     cp.stdout?.on("data", (data) => {
-      console.log('DATA', data);
       outData = data;
     });
     cp.stderr?.on("data", (data) => {
-      console.error('ERR', data);
       errData = data;
     });
     cp.on("close", (code) => {
       exitCode = code;
-    //   console.log(`child process close all stdio with code ${code}`);
       resolve(null);
     });
     cp.on("exit", (code) => {
       exitCode = code;
-    //   console.log(`child process exited with code ${code}`);
       resolve(null);
     });
   });

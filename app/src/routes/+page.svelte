@@ -6,10 +6,10 @@
 <input type="number" placeholder="upSpeed" bind:value={upSpeed} />
 <button disabled={lagRequestInProcess || unLagRequestInProcess} on:click={handleLagClick}>LAG IP</button>
 <button disabled={unLagRequestInProcess || lagRequestInProcess} on:click={handleUnLagClick}>UNLAG ALL</button>
-<JSONTree value={data.config} />
+<JSONTree shouldShowPreview={false} defaultExpandedLevel={100} value={data.config}  />
 <script lang="ts">
   import JSONTree from 'svelte-json-tree';
-  import { lag, unLag } from '$lib/lag';
+  import { lag, showConfig, unLag } from '$lib/lag';
   import type { PageData } from './$types';
 	
 	export let data: PageData;
@@ -20,6 +20,14 @@
   let upSpeed: number = 100;
   let downSpeed: number = 1000;
 
+  async function updateConfig() {
+     const c = await showConfig();
+     data.config = c.data;
+     console.log('Upd Conf', data.config);
+  }
+
+  $: ({config} = data)
+
   async function handleLagClick() {
     if (lagRequestInProcess) {
       return;
@@ -27,6 +35,7 @@
     lagRequestInProcess = true;
     const r = await lag({ip, upSpeed, downSpeed});
     console.log(r);
+    await updateConfig();
     lagRequestInProcess = false;
   }
   async function handleUnLagClick() {
@@ -36,6 +45,7 @@
     unLagRequestInProcess = true;
     const r = await unLag();
     console.log(r);
+    await updateConfig();
     unLagRequestInProcess = false;
   }
 </script>  
