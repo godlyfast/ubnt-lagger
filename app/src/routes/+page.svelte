@@ -8,9 +8,10 @@
     ip: string;
     upSpeed: number;
     downSpeed: number;
+    name: string;
   }[] = JSON.parse(JSON.stringify(data.entries));
 
-  $: entries = JSON.parse(JSON.stringify(data.entries));
+  // $: entries = JSON.parse(JSON.stringify(data.entries));
 
   let requestInProcess = false;
 
@@ -24,7 +25,21 @@
   async function handleUnLagClick(entry: any) {}
 
   async function addEntry() {
-    entries = [...entries, { ip: "", upSpeed: 500000, downSpeed: 500000 }];
+    entries = [...entries, { name: "", ip: "", upSpeed: 500000, downSpeed: 500000 }];
+  }
+
+  async function saveEntries() {
+    // requestInProcess = true;
+    const r = await fetch("/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ entries }),
+    });
+    console.log(r);
+    // await updateConfig();
+    // requestInProcess = false;
   }
 
   async function handleLagAllClick(
@@ -85,6 +100,8 @@
 
 <h1>UBNT Lagger</h1>
 {#each entries as entry}
+  <label for="name">Name</label>
+  <input type="text" placeholder="name" bind:value={entry.name} />
   <input type="text" placeholder="ip" bind:value={entry.ip} />
   <label for="downSpeed">Rate</label>
   <input type="number" placeholder="downSpeed" bind:value={entry.downSpeed} />
@@ -103,6 +120,7 @@
 <br />
 <button disabled={requestInProcess} on:click={updateConfig}>REFRESH</button>
 <button disabled={requestInProcess} on:click={addEntry}>ADD Entry</button>
+<button disabled={requestInProcess} on:click={saveEntries}>Save Entries</button>
 <button
   disabled={requestInProcess}
   on:click={() => handleLagAllClick(entries)}>LAG ALL</button
