@@ -1,4 +1,4 @@
-import SSH from 'simple-ssh';
+import SSH from "simple-ssh";
 import "dotenv/config";
 
 if (!process.env.UBNT_IP) {
@@ -17,7 +17,6 @@ const ssh = new SSH({
   pass: process.env.UBNT_PASS,
 });
 
-
 const fullDellCmd = `
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control
@@ -25,8 +24,12 @@ const fullDellCmd = `
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper save 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper end
 `;
-const fullInstallCmd = (IP: string, UP_SPEED: number, DOWN_SPEED: number) => `
+const fullInstallCmd = (
+  set: { IP: string; UP_SPEED: number; DOWN_SPEED: number }[]
+) => `
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin 
+
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control
 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue root queue 1023
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue root queue 1023 bandwidth 1000mbit
@@ -35,28 +38,76 @@ const fullInstallCmd = (IP: string, UP_SPEED: number, DOWN_SPEED: number) => `
 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue queue-type fq-codel UBNT_BQ_FQ_CODEL
 
-# src -> dst
 
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue 1 parent 1023
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue 1 bandwidth ${DOWN_SPEED}kbit
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue 1 queue-type UBNT_BQ_FQ_CODEL
+${set
+  .map(({ IP, UP_SPEED, DOWN_SPEED }, i) => {
+    const c = i + 10 * (i + 1);
+    return `
+# ${IP}, ${UP_SPEED}, ${DOWN_SPEED} 
+
+# src -> dst
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${c} parent 1023
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${c} bandwidth ${DOWN_SPEED}kbit
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${c} queue-type UBNT_BQ_FQ_CODEL
 
 # dst -> src
 
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue 2 parent 1023
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue 2 bandwidth ${UP_SPEED}kbit
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue 2 queue-type UBNT_BQ_FQ_CODEL
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${
+      c + 1
+    } parent 1023
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${
+      c + 1
+    } bandwidth ${UP_SPEED}kbit
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${
+      c + 1
+    } queue-type UBNT_BQ_FQ_CODEL
 
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match 1 attach-to 1023
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match 1 target 1
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match 1 ip source address ${IP}/32
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match ${c} attach-to 1023
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match ${c} target ${c}
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match ${c} ip source address ${IP}/32
 
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match 2 attach-to 1023
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match 2 target 2
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match 2 ip destination address ${IP}/32
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match ${
+      c + 1
+    } attach-to 1023
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match ${
+      c + 1
+    } target ${c + 1}
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue filters match ${
+      c + 1
+    } ip destination address ${IP}/32
+`;
+  })
+  .join("\n")}
 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper commit 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper save 
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper end
+`;
+
+const lagIpCmd = (
+  UP_QUEUE: number,
+  UP_SPEED: number,
+  DOWN_QUEUE: number,
+  DOWN_SPEED: number
+) => `
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control advanced-queue leaf queue ${UP_QUEUE}
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete traffic-control advanced-queue leaf queue ${DOWN_QUEUE}
+
+# src -> dst
+
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${DOWN_QUEUE} parent 1023
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${DOWN_QUEUE} bandwidth ${DOWN_SPEED}kbit
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${DOWN_QUEUE} queue-type UBNT_BQ_FQ_CODEL
+
+# dst -> src
+
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${UP_QUEUE} parent 1023
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${UP_QUEUE} bandwidth ${UP_SPEED}kbit
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set traffic-control advanced-queue leaf queue ${UP_QUEUE} queue-type UBNT_BQ_FQ_CODEL
+
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper commit
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper save
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper end
 `;
 
@@ -75,10 +126,45 @@ export function fullDell() {
     .start();
 }
 
-export function fullInstall({ip, upSpeed, downSpeed}: {ip: string, upSpeed: number, downSpeed: number}) {
+export async function fullInstall(
+  set: { ip: string; upSpeed: number; downSpeed: number }[]
+) {
+  const cmd = fullInstallCmd(
+    set.map(({ ip, upSpeed, downSpeed }) => ({
+      IP: ip,
+      UP_SPEED: upSpeed,
+      DOWN_SPEED: downSpeed,
+    }))
+  );
+  console.log("set", set);
+  console.log("cmd", cmd);
   return ssh
     .exec("bash", {
-      args: ["-c", fullInstallCmd(ip, upSpeed, downSpeed)],
+      args: ["-c", cmd],
+      out: function (stdout) {
+        console.log(stdout);
+      },
+    })
+    .start();
+}
+
+export function lagIp({
+  upQueueNumber,
+  downQueueNumber,
+  upSpeed,
+  downSpeed,
+}: {
+  upQueueNumber: number;
+  downQueueNumber: number;
+  upSpeed: number;
+  downSpeed: number;
+}) {
+  return ssh
+    .exec("bash", {
+      args: [
+        "-c",
+        lagIpCmd(upQueueNumber, upSpeed, downQueueNumber, downSpeed),
+      ],
       out: function (stdout) {
         console.log(stdout);
       },
@@ -87,29 +173,41 @@ export function fullInstall({ip, upSpeed, downSpeed}: {ip: string, upSpeed: numb
 }
 
 const mode = process.argv[2];
-const ip = process.argv[3];
-const upSpeed = +process.argv[4];
-const downSpeed = +process.argv[5];
 
-console.log("mode:", mode);
-switch (mode) {
-  case "fullDell":
-    fullDell();
-    break;
-  case "fullInstall":
-    fullDell();
-    fullInstall({ip, upSpeed, downSpeed});
-    break;
-  case "showConfig":
-    ssh
-      .exec("bash", {
-        args: ["-c", showConfigCmd],
-        out: function (stdout) {
-          console.log(stdout);
-        },
-      })
-      .start();
-    break;  
-  default:
-    console.log("Unknown mode");
-}
+(async function () {
+  console.log("mode:", mode);
+  switch (mode) {
+    case "fullDell":
+      fullDell();
+      break;
+    case "lagIp":
+      const upQueueNumber = +process.argv[3];
+      const upSpeed = +process.argv[4];
+      const downQueueNumber = +process.argv[5];
+      const downSpeed = +process.argv[6];
+      lagIp({ upQueueNumber, downQueueNumber, upSpeed, downSpeed });
+      break;
+    case "fullInstall":
+      const set = [];
+      for (let i = 3; i < process.argv.length; i += 3) {
+        const ip = process.argv[i];
+        const upSpeed = +process.argv[i + 1];
+        const downSpeed = +process.argv[i + 2];
+        set.push({ ip, upSpeed, downSpeed });
+      }
+      fullInstall(set);
+      break;
+    case "showConfig":
+      ssh
+        .exec("bash", {
+          args: ["-c", showConfigCmd],
+          out: function (stdout) {
+            console.log(stdout);
+          },
+        })
+        .start();
+      break;
+    default:
+      console.log("Error: Unknown mode");
+  }
+})();

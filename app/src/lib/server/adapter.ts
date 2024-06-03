@@ -22,10 +22,9 @@ const chunkArray = (arr: any[], chunkSize: number) => {
 };
 
 const parseConfig = (outData: string) => {
-  // console.log(outData);
   if (!outData) {
     return {};
-  }  
+  }
   while (outData.includes("  ")) {
     outData = outData.replace("  ", " ");
   }
@@ -116,33 +115,31 @@ const parseConfig = (outData: string) => {
     }
   });
 
-  return map
+  return map;
 };
 
-
-
 async function execute(args: string[]) {
-  let outData: any;
-  let errData: any;
+  let outData: string = '';
+  let errData: string = '';
   let exitCode: number | null = null;
   await new Promise((resolve) => {
     const cp: ChildProcess = exec(
       `cd ../script && npm run lagger ${args.join(" ")}`
     );
     cp.stdout?.on("data", (data) => {
-      outData = data;
+      outData += data;
     });
     cp.stderr?.on("data", (data) => {
-      errData = data;
+      errData += data;
     });
     cp.on("close", (code) => {
       exitCode = code;
       resolve(null);
     });
-    cp.on("exit", (code) => {
-      exitCode = code;
-      resolve(null);
-    });
+    // cp.on("exit", (code) => {
+    //   exitCode = code;
+    //   resolve(null);
+    // });
   });
   return {
     outData,
@@ -159,16 +156,30 @@ export async function showConfig() {
     errData,
     exitCode,
     config: parseConfig(outData),
-  };  
+  };
 }
 
 export async function fullInstall(
-  ip: string,
-  upSpeed: number,
-  downSpeed: number
+  set: { ip: string; upSpeed: number; downSpeed: number }[]
 ) {
-  const { outData, errData, exitCode } = await execute([
+  const args = [
     "fullInstall",
+    ...set.map(
+      ({ ip, upSpeed, downSpeed }) =>
+        `${ip} ${upSpeed.toString()} ${downSpeed.toString()}`
+    ),
+  ];
+  const { outData, errData, exitCode } = await execute(args);
+  return {
+    outData,
+    errData,
+    exitCode,
+  };
+}
+
+export async function lagIp(ip: string, upSpeed: number, downSpeed: number) {
+  const { outData, errData, exitCode } = await execute([
+    "lagIp",
     ip,
     upSpeed.toString(),
     downSpeed.toString(),
@@ -182,11 +193,11 @@ export async function fullInstall(
 }
 
 export async function fullDell() {
-    const { outData, errData, exitCode } = await execute(["fullDell"]);
-    
-    return {
-        outData,
-        errData,
-        exitCode,
-    };
+  const { outData, errData, exitCode } = await execute(["fullDell"]);
+
+  return {
+    outData,
+    errData,
+    exitCode,
+  };
 }

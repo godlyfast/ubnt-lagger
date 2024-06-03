@@ -18,10 +18,48 @@ export const GET: RequestHandler = async ({ url }) => {
     switch (mode) {
       case "showConfig":
         const conf = await showConfig();
+
+        const matches = conf?.config["advanced-queue"]?.filters?.match;
+        const leafQueueMap = conf?.config["advanced-queue"]?.leaf?.queue;
+                        
+        const records: any = {};
+        const matchesKeys = Object.keys(matches || {});
+        
+        for (let i = 0; i < matchesKeys.length; i++) {
+          const key = matchesKeys[i];
+          const match = matches[key];
+          const sourceIp = match.ip?.source?.address?.split("/")[0];
+          const destIp = match.ip?.destination?.address?.split("/")[0];
+          const leafQueue = leafQueueMap[match.target];
+          if (sourceIp && !records[sourceIp]) {
+            records[sourceIp] = { ip: sourceIp };
+          }
+          if (destIp && !records[destIp]) {
+            records[destIp] = { ip: destIp };
+          }
+          if (sourceIp) {
+            records[sourceIp].downSpeed = +leafQueue.bandwidth.split("kbit")[0];
+          }
+          if (destIp) {
+            records[destIp].upSpeed = +leafQueue.bandwidth.split("kbit")[0];
+          }
+        }
         outData = conf.outData;
         errData = conf.errData;
         exitCode = conf.exitCode;
-        data = conf.config;
+        console.log("records", records);
+        data = Object.values(records || {});
+        break;
+      case "lagIp":
+        if (!ip) {
+          throw new Error("IP is required");
+        }
+        if (!upSpeed) {
+          throw new Error("Up speed is required");
+        }
+        if (!downSpeed) {
+          throw new Error("Down speed is required");
+        }
         break;
       case "fullInstall":
         if (!ip) {
@@ -33,7 +71,7 @@ export const GET: RequestHandler = async ({ url }) => {
         if (!downSpeed) {
           throw new Error("Down speed is required");
         }
-        const r = await fullInstall(ip, +upSpeed, +downSpeed);
+        const r = await fullInstall([{ ip, upSpeed: +upSpeed, downSpeed: +downSpeed }]);
         outData = r.outData;
         errData = r.errData;
         exitCode = r.exitCode;
