@@ -41,7 +41,19 @@ const fullInstallCmd = (
 
 ${set
   .map(({ IP, UP_SPEED, DOWN_SPEED }, i) => {
-    const c = i + 10 * (i + 1);
+    // 0 -> 1, 2
+    // 1 -> 3, 4
+    // 2 -> 5, 6
+    // 3 -> 7, 8
+    // 4 -> 9, 10
+    // 5 -> 11, 12
+    const arr = [];
+    let j = 1;
+    while (arr.length < i + 1) {
+      if (j % 2 !== 0) arr.push(j);
+      j += 1;
+    }
+    const c = arr[i];
     return `
 # ${IP}, ${UP_SPEED}, ${DOWN_SPEED} 
 
@@ -160,14 +172,17 @@ export function lagIp({
   oldUpSpeed: number;
   oldDownSpeed: number;
 }) {
-  const cmd = lagIpCmd(upQueueNumber, oldUpSpeed, upSpeed, downQueueNumber, oldDownSpeed, downSpeed);
-  console.log(cmd);
+  const cmd = lagIpCmd(
+    upQueueNumber,
+    oldUpSpeed,
+    upSpeed,
+    downQueueNumber,
+    oldDownSpeed,
+    downSpeed
+  );
   return ssh
     .exec("bash", {
-      args: [
-        "-c",
-        cmd,
-      ],
+      args: ["-c", cmd],
       out: function (stdout) {
         console.log(stdout);
       },
@@ -190,7 +205,14 @@ const mode = process.argv[2];
       const downQueueNumber = +process.argv[6];
       const oldDownSpeed = +process.argv[7];
       const downSpeed = +process.argv[8];
-      lagIp({ upQueueNumber, downQueueNumber, upSpeed, downSpeed, oldDownSpeed, oldUpSpeed });
+      lagIp({
+        upQueueNumber,
+        downQueueNumber,
+        upSpeed,
+        downSpeed,
+        oldDownSpeed,
+        oldUpSpeed,
+      });
       break;
     case "fullInstall":
       const set = [];
