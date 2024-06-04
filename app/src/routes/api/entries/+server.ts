@@ -1,4 +1,4 @@
-import { batchCreateEntries, deleteAllEntries } from "$lib/server/database";
+import { batchCreateEntries, deleteAllEntries, getEntries } from "$lib/server/database";
 import { json, type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ request, url }) => {
@@ -12,7 +12,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
   } = await request.json();
 
   await deleteAllEntries();
-  const e = await batchCreateEntries(body.entries.map(({ip, downSpeed, upSpeed, name}) => ({
+  const e = await batchCreateEntries(body.entries.map(({ip, downSpeed, upSpeed, name}, i) => ({
+    id: i,
     ip,
     downSpeed,
     upSpeed,
@@ -21,3 +22,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
   return json({ data: e });
 };
+
+export const GET: RequestHandler = async ({ request, url }) => {
+  return json({ data: await getEntries() });
+}

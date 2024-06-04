@@ -1,8 +1,9 @@
 import { fullDell, fullInstall, lagIp, showConfig } from "$lib/server/adapter";
 import type { RequestHandler } from "@sveltejs/kit";
 import { json } from "@sveltejs/kit";
+import mergeDeep from "merge-deep";
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, fetch }) => {
   const mode = url.searchParams.get("mode");
 
   let outData: any;
@@ -10,11 +11,14 @@ export const GET: RequestHandler = async ({ url }) => {
   let exitCode: number | null = null;
 
   let data: any;
+  let debug: any;
 
   try {
     switch (mode) {
       case "showConfig":
         const conf = await showConfig();
+        const entriesReq = await fetch("/api/entries");
+        const {data: entries} = await entriesReq.json();
 
         const matches = conf?.config["advanced-queue"]?.filters?.match;
         const leafQueueMap = conf?.config["advanced-queue"]?.leaf?.queue;
@@ -46,7 +50,8 @@ export const GET: RequestHandler = async ({ url }) => {
         outData = conf.outData;
         errData = conf.errData;
         exitCode = conf.exitCode;
-        data = Object.values(records || {});
+        data = mergeDeep([], entries.map(({name, id} : any) => ({name, id}) ), Object.values(records || {}) );
+        debug = { matches, leafQueueMap, records, conf };
         break;
       case "lagIp":
         const upQueueId = url.searchParams.get("upQueueId");
@@ -99,7 +104,7 @@ export const GET: RequestHandler = async ({ url }) => {
     return json({ error: e.message }, { status: 400 });
   }
 
-  return json({ mode, outData, errData, exitCode, data });
+  return json({ mode, outData, errData, exitCode, data, debug });
 };
 
 export const POST: RequestHandler = async ({ request, url }) => {

@@ -19,7 +19,9 @@
     requestInProcess = true;
     const { data: conf } = await showConfig();
     data = { ...data, entries: conf };
+    entries = JSON.parse(JSON.stringify(data.entries));
     requestInProcess = false;
+    saveEntries();
   }
 
   async function handleUnLagClick(entry: any) {}
