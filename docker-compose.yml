@@ -1,0 +1,24 @@
+services:
+  lagger:
+    platform: linux/amd64
+    container_name: lagger
+    # The name of the image that will be created when building this container
+    image: lagger
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # user: "node"
+    environment:
+      # Internal server error messages will not send stacktrace to the browser in production
+      - NODE_ENV=production
+      # Sets the timezone of the containers OS
+      - TZ=Europe/Kiev
+    # Points to a file with the sensitive environment variables
+    env_file:
+      - .env
+    restart: unless-stopped
+    ports:
+      - 3003:3000
+    volumes:
+      - ./app:/app/lagger/app
+      - ./script:/app/lagger/script
