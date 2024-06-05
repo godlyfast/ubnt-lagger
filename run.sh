@@ -1,0 +1,1 @@
+docker run -d --name lagger -p 3003:3000 --platform linux/amd64 192.168.55.100:5000/lagger:latest
