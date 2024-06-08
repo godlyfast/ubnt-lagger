@@ -1,22 +1,22 @@
 #Dockerfile
 
 # Use this image as the platform to build the app
-FROM node:20-alpine AS lagger
+FROM node:20-alpine AS shms
 
 # Copy all local files into the image
 
-WORKDIR /lagger
+WORKDIR /shms
 
 COPY . .
 
-WORKDIR /lagger/app
+WORKDIR /shms/app
 
-RUN cd /lagger/script && rm -rf node_modules && yarn
+RUN cd /shms/pf-router && rm -rf node_modules && yarn
 
 # The WORKDIR instruction sets the working directory for everything that will happen next
-WORKDIR /lagger/app
+WORKDIR /shms/app
 
-RUN cd /lagger/app && rm -rf node_modules .svelte-kit build && yarn
+RUN cd /shms/app && rm -rf node_modules .svelte-kit build && yarn
 
 # Build SvelteKit app
 RUN yarn build

@@ -107,9 +107,13 @@
     await updateData();
     requestInProcess = false;
   }
+  function hasConfigEntry(entry: any) {
+    const e = config?.find((e: any) => e.ip === entry.ip);
+    return e?.upQueueId !== undefined && e?.downQueueId !== undefined;
+  }
 </script>
 
-<h1>UBNT Lagger</h1>
+<h1>UBNT SQS</h1>
 {#each entries as entry}
   <label for="name">Name</label>
   <input type="text" placeholder="name" bind:value={entry.name} />
@@ -118,16 +122,16 @@
   <input type="number" placeholder="downSpeed" bind:value={entry.downSpeed} />
   <label for="upSpeed">Reverse Rate</label>
   <input type="number" placeholder="upSpeed" bind:value={entry.upSpeed} />
-  <button disabled={requestInProcess} on:click={() => handleLagClick(entry)}
+  <button disabled={requestInProcess || !hasConfigEntry(entry)} on:click={() => handleLagClick(entry)}
     >SET LAG</button
   >
   <button
-    disabled={requestInProcess}
-    on:click={() => handleLagClick({ ...entry, downSpeed: 500, upSpeed: 500 })}
+    disabled={requestInProcess || !hasConfigEntry(entry)}
+    on:click={() => handleLagClick({ ...entry, downSpeed: 50, upSpeed: 50 })}
     >LAG</button
   >
   <button
-    disabled={requestInProcess}
+    disabled={requestInProcess || !hasConfigEntry(entry)}
     on:click={() =>
       handleLagClick({ ...entry, downSpeed: 500000, upSpeed: 500000 })}
     >UN_LAG</button
@@ -139,10 +143,10 @@
 <button disabled={requestInProcess} on:click={addEntry}>ADD Entry</button>
 <button disabled={requestInProcess} on:click={saveEntries}>Save Entries</button>
 <button disabled={requestInProcess} on:click={() => handleLagAllClick(entries)}
-  >LAG ALL</button
+  >PUSH CONFIG</button
 >
 <button disabled={requestInProcess} on:click={handleUnLagAllClick}
-  >UN_LAG ALL</button
+  >DELETE CONFIG</button
 >
 <JSONTree
   shouldShowPreview={false}
