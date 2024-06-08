@@ -1,4 +1,5 @@
 import { ChildProcess, exec } from "node:child_process";
+import { PF_ROUTER_PATH } from "$env/static/private";
 
 import brackets from "g2-bracket-parser";
 import mergeDeep from "merge-deep";
@@ -124,7 +125,7 @@ async function execute(args: string[]) {
   let exitCode: number | null = null;
   await new Promise((resolve) => {
     const cp: ChildProcess = exec(
-      `cd ../script && npm run lagger ${args.join(" ")}`
+      `cd ${PF_ROUTER_PATH} && npm run qos ${args.join(" ")}`
     );
     cp.stdout?.on("data", (data) => {
       outData += data;

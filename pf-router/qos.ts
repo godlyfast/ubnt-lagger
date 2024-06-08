@@ -1,21 +1,4 @@
-import SSH from "simple-ssh";
-import "dotenv/config";
-
-if (!process.env.UBNT_IP) {
-  throw new Error("UBNT_IP is not defined");
-}
-if (!process.env.UBNT_USER) {
-  throw new Error("UBNT_USER is not defined");
-}
-if (!process.env.UBNT_PASS) {
-  throw new Error("UBNT_PASS is not defined");
-}
-
-const ssh = new SSH({
-  host: process.env.UBNT_IP,
-  user: process.env.UBNT_USER,
-  pass: process.env.UBNT_PASS,
-});
+import { run } from "./run";
 
 const fullDellCmd = `
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin 
@@ -127,14 +110,7 @@ const showConfigCmd = `
 `;
 
 export function fullDell() {
-  return ssh
-    .exec("bash", {
-      args: ["-c", fullDellCmd],
-      out: function (stdout) {
-        console.log(stdout);
-      },
-    })
-    .start();
+  return run(fullDellCmd);
 }
 
 export async function fullInstall(
@@ -147,14 +123,7 @@ export async function fullInstall(
       DOWN_SPEED: downSpeed,
     }))
   );
-  return ssh
-    .exec("bash", {
-      args: ["-c", cmd],
-      out: function (stdout) {
-        console.log(stdout);
-      },
-    })
-    .start();
+  return run(cmd);
 }
 
 export function lagIp({
@@ -180,14 +149,7 @@ export function lagIp({
     oldDownSpeed,
     downSpeed
   );
-  return ssh
-    .exec("bash", {
-      args: ["-c", cmd],
-      out: function (stdout) {
-        console.log(stdout);
-      },
-    })
-    .start();
+  return run(cmd);
 }
 
 const mode = process.argv[2];
@@ -196,7 +158,8 @@ const mode = process.argv[2];
   console.log("mode:", mode);
   switch (mode) {
     case "fullDell":
-      fullDell();
+      const {stdout: fdo, stderr: fde} = await fullDell();
+      console.log(fdo, fde);
       break;
     case "lagIp":
       const upQueueNumber = +process.argv[3];
@@ -205,7 +168,7 @@ const mode = process.argv[2];
       const downQueueNumber = +process.argv[6];
       const oldDownSpeed = +process.argv[7];
       const downSpeed = +process.argv[8];
-      lagIp({
+      const {stdout: lo, stderr: le} = await lagIp({
         upQueueNumber,
         downQueueNumber,
         upSpeed,
@@ -213,6 +176,7 @@ const mode = process.argv[2];
         oldDownSpeed,
         oldUpSpeed,
       });
+      console.log(lo, le);
       break;
     case "fullInstall":
       const set = [];
@@ -222,17 +186,12 @@ const mode = process.argv[2];
         const downSpeed = +process.argv[i + 2];
         set.push({ ip, upSpeed, downSpeed });
       }
-      fullInstall(set);
+      const {stdout: fio, stderr: fie} = await fullInstall(set);
+      console.log(fio, fie);
       break;
     case "showConfig":
-      ssh
-        .exec("bash", {
-          args: ["-c", showConfigCmd],
-          out: function (stdout) {
-            console.log(stdout);
-          },
-        })
-        .start();
+      const {stdout, stderr} = await run(showConfigCmd);
+      console.log(stdout, stderr);
       break;
     default:
       console.log("Error: Unknown mode");

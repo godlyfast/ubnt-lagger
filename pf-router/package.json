@@ -1,0 +1,28 @@
+{
+  "name": "pf-router",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "deploy-vpn-config": "ts-node deploy_vpn_config.ts",
+    "update-ip-group": "ts-node update_ip_group.ts",
+    "update-vpn-rules": "ts-node update_vpn_rules.ts",
+    "scan": "ts-node scan.ts",
+    "qos": "ts-node qos.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ipaddr.js": "^2.2.0",
+    "merge-deep": "^3.0.3",
+    "simple-ssh": "^1.1.1",
+    "subquest": "^1.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/merge-deep": "^3.0.3",
+    "@types/node": "^20.14.2"
+  }
+}
