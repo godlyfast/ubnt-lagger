@@ -1,7 +1,6 @@
-import { fullDell, fullInstall, lagIp, showConfig } from "$lib/server/adapter";
+import { fullDell, fullInstall, lagIp, showConfigWithEntriesPopulated, synchronizeEntries } from "$lib/server/qos";
 import type { RequestHandler } from "@sveltejs/kit";
 import { json } from "@sveltejs/kit";
-import mergeDeep from "merge-deep";
 
 export const GET: RequestHandler = async ({ url, fetch }) => {
   const mode = url.searchParams.get("mode");
@@ -15,43 +14,17 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
 
   try {
     switch (mode) {
+      case "synchronizeEntries":
+        const se = await synchronizeEntries();
+        break;
+
       case "showConfig":
-        const conf = await showConfig();
-        const entriesReq = await fetch("/api/entries");
-        const {data: entries} = await entriesReq.json();
-
-        const matches = conf?.config["advanced-queue"]?.filters?.match;
-        const leafQueueMap = conf?.config["advanced-queue"]?.leaf?.queue;
-                        
-        const records: any = {};
-        const matchesKeys = Object.keys(matches || {});
-
-        for (let i = 0; i < matchesKeys.length; i++) {
-          const key = matchesKeys[i];
-          const match = matches[key];
-          const sourceIp = match.ip?.source?.address?.split("/")[0];
-          const destIp = match.ip?.destination?.address?.split("/")[0];
-          const leafQueue = leafQueueMap[match.target];
-          if (sourceIp && !records[sourceIp]) {
-            records[sourceIp] = { ip: sourceIp };
-          }
-          if (destIp && !records[destIp]) {
-            records[destIp] = { ip: destIp };
-          }
-          if (sourceIp) {
-            records[sourceIp].downSpeed = +leafQueue.bandwidth.split("kbit")[0];
-            records[sourceIp].downQueueId = +match.target;
-          }
-          if (destIp) {
-            records[destIp].upSpeed = +leafQueue.bandwidth.split("kbit")[0];
-            records[destIp].upQueueId = +match.target;
-          }
-        }
-        outData = conf.outData;
-        errData = conf.errData;
-        exitCode = conf.exitCode;
-        data = mergeDeep([], entries.map(({name, id} : any) => ({name, id}) ), Object.values(records || {}) );
-        debug = { matches, leafQueueMap, records, conf };
+        const c = await showConfigWithEntriesPopulated();
+        outData = c.outData;
+        errData = c.errData;
+        exitCode = c.exitCode;
+        data = c.data;
+        debug = c.debug;
         break;
       case "lagIp":
         const upQueueId = url.searchParams.get("upQueueId");
@@ -89,10 +62,12 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
         outData = lag.outData;
         errData = lag.errData;
         exitCode = lag.exitCode;
+        await synchronizeEntries();
         break;
 
       case "fullDell":
         const del = await fullDell();
+        await synchronizeEntries();
         outData = del.outData;
         errData = del.errData;
         exitCode = del.exitCode;
@@ -121,6 +96,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
         return json({ error: "Body must be an array" }, { status: 400 });
       }
       const fi = await fullInstall(body);
+      await synchronizeEntries();
       outData = fi.outData;
       errData = fi.errData;
       exitCode = fi.exitCode;
