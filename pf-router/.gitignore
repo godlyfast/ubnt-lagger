@@ -3,3 +3,4 @@ artifacts
 .env
 ips.json
 names.json
+.DS_Store

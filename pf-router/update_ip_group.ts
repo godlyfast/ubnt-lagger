@@ -1,7 +1,10 @@
-import { readFileSync } from "fs";
 import { run } from "./run";
+import { PrismaClient } from "@prisma/client";
 
-const cmd = (GROUP_NAME: string, ipsToAdd: string[]) => `sudo /config/scripts/add_group.sh ${GROUP_NAME} ${ipsToAdd.join(" ")}`;
+const prisma = new PrismaClient();
+
+const cmd = (GROUP_NAME: string, ipsToAdd: string[]) =>
+  `sudo /config/scripts/add_group.sh ${GROUP_NAME} ${ipsToAdd.join(" ")}`;
 
 (async () => {
   try {
@@ -14,9 +17,13 @@ const cmd = (GROUP_NAME: string, ipsToAdd: string[]) => `sudo /config/scripts/ad
     if (!stdout) {
       throw new Error("No output");
     }
-    const nameToIpsMapScanned: Record<string, string[]> = JSON.parse(
-      readFileSync("ips.json").toString()
-    );
+
+    const nameToIpsMapScanned: Record<string, string[]> = (
+      await prisma.domainName.findMany({ include: { ipRecords: true } })
+    ).reduce<Record<string, string[]>>((acc, val) => {
+      acc[val.name] = val.ipRecords.map((ip) => ip.ip);
+      return acc;
+    }, {});
 
     const names = Object.keys(nameToIpsMapScanned);
 
@@ -48,7 +55,9 @@ const cmd = (GROUP_NAME: string, ipsToAdd: string[]) => `sudo /config/scripts/ad
       commands.push(cmd(name, ipsToAdd));
       console.log(name, ": IPs to add", ipsToAdd);
     });
-    const { stdout: addOut, stderr: addErr } = await run(`${commands.join(" && ")}`);
+    const { stdout: addOut, stderr: addErr } = await run(
+      `${commands.join(" && ")}`
+    );
     console.log(addOut, addErr);
   } catch (error) {
     console.error(error);

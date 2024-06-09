@@ -1,5 +1,7 @@
-import { readFileSync } from "fs";
 import { run } from "./run";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 const LB_GROUP = process.env.LB_GROUP;
 
@@ -17,9 +19,12 @@ const cmd = (names: string[], lastRuleNumber: number = 151) =>
     .join(" && ");
 
 (async () => {
-  const nameToIpsMapScanned: Record<string, string[]> = JSON.parse(
-    readFileSync("ips.json").toString()
-  );
+  const nameToIpsMapScanned: Record<string, string[]> = (
+    await prisma.domainName.findMany({ include: { ipRecords: true } })
+  ).reduce<Record<string, string[]>>((acc, val) => {
+    acc[val.name] = val.ipRecords.map((ip) => ip.ip);
+    return acc;
+  }, {});
 
   const names = Object.keys(nameToIpsMapScanned);
 
@@ -62,7 +67,9 @@ const cmd = (names: string[], lastRuleNumber: number = 151) =>
     return;
   }
 
-  const latestRuleNumber = Math.max( ...existingNames.map(({ ruleNumber }) => parseInt(ruleNumber)) );
+  const latestRuleNumber = Math.max(
+    ...existingNames.map(({ ruleNumber }) => parseInt(ruleNumber))
+  );
 
   const { stderr, stdout } = await run(
     cmd(namesToCreate, latestRuleNumber + 1)
