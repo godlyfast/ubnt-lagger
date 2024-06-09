@@ -18,7 +18,8 @@ rm -rf node_modules .svelte-kit build && \
 yarn install && \
 yarn build && \
 rm -rf node_modules && \
-yarn install --prod
+yarn install --prod && \
+rm -rf src/ static/ .svelte-kit prisma 
 
 # The USER instruction sets the user name to use as the default user for the remainder of the current stage
 # USER node:node
@@ -27,7 +28,5 @@ FROM node:20-alpine AS shms
 COPY --from=shms-build /shms /shms
 
 WORKDIR /shms/app
-
-RUN rm -rf src/ static/ .svelte-kit prisma 
 
 CMD [ "node", "build" ]
