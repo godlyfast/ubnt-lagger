@@ -4,12 +4,12 @@ const prisma = new PrismaClient();
 
 
 export const getEntries = async () => {
-  const entries = await prisma.entries.findMany();
+  const entries = await prisma.qosEntries.findMany();
   return entries;
 }
 
-export const createEntry = async (data: Prisma.EntriesCreateInput) => {
-  const entry = await prisma.entries.create({
+export const createEntry = async (data: Prisma.QosEntriesCreateInput) => {
+  const entry = await prisma.qosEntries.create({
     data: {
       ...data,
     }
@@ -18,7 +18,7 @@ export const createEntry = async (data: Prisma.EntriesCreateInput) => {
 }
 
 export const deleteEntry = async (id: number) => {
-  const entry = await prisma.entries.delete({
+  const entry = await prisma.qosEntries.delete({
     where: {
       id
     }
@@ -26,8 +26,8 @@ export const deleteEntry = async (id: number) => {
   return entry;
 }
 
-export const updateEntry = async (id: number, data: Prisma.EntriesUpdateInput) => {
-  const entry = await prisma.entries.update({
+export const updateEntry = async (id: number, data: Prisma.QosEntriesUpdateInput) => {
+  const entry = await prisma.qosEntries.update({
     where: {
       id
     },
@@ -39,7 +39,7 @@ export const updateEntry = async (id: number, data: Prisma.EntriesUpdateInput) =
 }
 
 export const getEntry = async (id: number) => {
-  const entry = await prisma.entries.findUnique({
+  const entry = await prisma.qosEntries.findUnique({
     where: {
       id
     }
@@ -48,7 +48,7 @@ export const getEntry = async (id: number) => {
 }
 
 export const getEntryByIp = async (ip: string) => {
-  const entry = await prisma.entries.findFirst({
+  const entry = await prisma.qosEntries.findFirst({
     where: {
       ip
     }
@@ -56,14 +56,14 @@ export const getEntryByIp = async (ip: string) => {
   return entry;
 }
 
-export const batchCreateEntries = async (data: Prisma.EntriesCreateManyInput[]) => {
-    const entries = await prisma.entries.createMany({
+export const batchCreateEntries = async (data: Prisma.QosEntriesCreateManyInput[]) => {
+    const entries = await prisma.qosEntries.createMany({
         data
     });
     return entries;
 }
 
 export const deleteAllEntries = async () => {
-    const entries = await prisma.entries.deleteMany();
+    const entries = await prisma.qosEntries.deleteMany();
     return entries;
 }

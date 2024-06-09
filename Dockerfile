@@ -1,32 +1,33 @@
 #Dockerfile
 
 # Use this image as the platform to build the app
-FROM node:20-alpine AS shms
+FROM node:20-alpine AS shms-build
 
 # Copy all local files into the image
 
-WORKDIR /shms
-
-COPY . .
+COPY . /shms
 
 WORKDIR /shms/app
 
-RUN cd /shms/pf-router && rm -rf node_modules && yarn
-
-# The WORKDIR instruction sets the working directory for everything that will happen next
-WORKDIR /shms/app
-
-RUN cd /shms/app && rm -rf node_modules .svelte-kit build && yarn
-
-# Build SvelteKit app
-RUN yarn build
-
-# Delete source code files that were used to build the app that are no longer needed
-RUN rm -rf src/ static/ emailTemplates
+RUN cd /shms/pf-router && \
+rm -rf node_modules && \
+yarn install --prod && \
+rm -rf artifacts && \
+cd /shms/app && \
+rm -rf node_modules .svelte-kit build && \
+yarn install && \
+yarn build && \
+rm -rf node_modules && \
+yarn install --prod
 
 # The USER instruction sets the user name to use as the default user for the remainder of the current stage
 # USER node:node
 
-# This is the command that will be run inside the image when you tell Docker to start the container
-# CMD ["sh", "-c", "npm run preview -- --host 0.0.0.0"]
+FROM node:20-alpine AS shms
+COPY --from=shms-build /shms /shms
+
+WORKDIR /shms/app
+
+RUN rm -rf src/ static/ .svelte-kit prisma 
+
 CMD [ "node", "build" ]

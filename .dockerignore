@@ -1,0 +1,11 @@
+.dockerignore
+.DS_Store
+**/node_modules
+.git
+.vscode
+artifacts
+pf-router/node_modules
+pf-router/artifacts
+app/node_modules
+app/.svelte-kit
+app/build

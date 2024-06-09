@@ -30,7 +30,10 @@
     entries = JSON.parse(JSON.stringify(data.entries));
   }
 
-  async function handleUnLagClick(entry: any) {}
+  async function removeEntry(entry: any) {
+    entries = entries.filter((e) => e.ip !== entry.ip);
+    await saveEntries();
+  }
 
   async function addEntry() {
     entries = [
@@ -40,7 +43,6 @@
   }
 
   async function saveEntries() {
-    // requestInProcess = true;
     const r = await fetch("/api/entries", {
       method: "POST",
       headers: {
@@ -48,9 +50,6 @@
       },
       body: JSON.stringify({ entries }),
     });
-    console.log(r);
-    // await updateConfig();
-    // requestInProcess = false;
   }
 
   async function handleLagAllClick(
@@ -136,6 +135,8 @@
       handleLagClick({ ...entry, downSpeed: 500000, upSpeed: 500000 })}
     >UN_LAG</button
   >
+  <button disabled={requestInProcess} on:click={() => removeEntry(entry)}
+    >REMOVE ENTRY</button>
   <br />
 {/each}
 <br />
