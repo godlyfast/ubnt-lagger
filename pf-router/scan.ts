@@ -1,6 +1,14 @@
 import dns from "node:dns";
 import ipaddr from "ipaddr.js";
 import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+
+const {DEST_VPN_REQUIRED} = process.env;
+
+if (!DEST_VPN_REQUIRED) {
+  throw new Error("DEST_VPN_REQUIRED is not defined");
+}
+
 
 const prisma = new PrismaClient();
 
@@ -8,12 +16,12 @@ async function getIps(names: string[]): Promise<Record<string, string[]>> {
   const ips: Record<string, string[]> = {};
 
   await Promise.all(
-    names.map((name) => {
+    names.filter((n) => n !== DEST_VPN_REQUIRED).map((name) => {
       return new Promise<void>((resolve, reject) => {
         dns.lookup(
           name,
           {
-            family: 6,
+            family: 0,
             hints: dns.ADDRCONFIG | dns.V4MAPPED,
             all: true,
           },
@@ -58,6 +66,31 @@ process.argv[2] === "ips" &&
     });
     const names: string[] = dns.map((dn) => dn.name);
     const ips = await getIps(names);
+
+    const orphans = await prisma.ipRecord.findMany({
+      where: {
+        domainNames: {
+          none: {},
+        },
+      },
+    })
+
+    await prisma.domainName.upsert({
+      where: {
+        name: DEST_VPN_REQUIRED,
+      },
+      update: {
+        ipRecords: {
+          connect: orphans.map((orphan) => ({ id: orphan.id })),
+        },
+      },
+      create: {
+        name: DEST_VPN_REQUIRED,
+        ipRecords: {
+          connect: orphans.map((orphan) => ({ id: orphan.id })),
+        },
+      },
+    });
 
     const storedIps: Record<string, string[]> = dns.reduce<
       Record<string, string[]>

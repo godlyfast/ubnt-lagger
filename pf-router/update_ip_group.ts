@@ -1,5 +1,6 @@
 import { run } from "./run";
 import { PrismaClient } from "@prisma/client";
+import ipaddr from "ipaddr.js";
 
 const prisma = new PrismaClient();
 
@@ -36,12 +37,13 @@ const cmd = (GROUP_NAME: string, ipsToAdd: string[]) =>
         ipsInConfig = ipsStr
           .split(" ")
           .map((ip) => ip.trim())
-          .filter((ip) => ip !== "" && ip !== "undefined" && ip !== "address");
+          .filter((ip) => ip !== "" && ip !== "undefined" && ip !== "address" && ipaddr.isValid(ip));
       }
 
-      // console.log(ips, ipsScanned);
+      // console.log('in conf', ipsInConfig, 'in DB', nameToIpsMapScanned[name]);
       const ipsToAdd: string[] = [];
       const ipsScanned = nameToIpsMapScanned[name];
+      
       ipsScanned.forEach((ip: string) => {
         if (!ipsInConfig.includes(ip)) {
           // console.log("Adding IP", ip);
