@@ -37,7 +37,7 @@ const cmd = (GROUP_NAME: string, ipsToAdd: string[]) =>
         ipsInConfig = ipsStr
           .split(" ")
           .map((ip) => ip.trim())
-          .filter((ip) => ip !== "" && ip !== "undefined" && ip !== "address" && ipaddr.isValid(ip));
+          .filter((ip) => ipaddr.isValid(ip));
       }
 
       // console.log('in conf', ipsInConfig, 'in DB', nameToIpsMapScanned[name]);
