@@ -6,6 +6,8 @@
   "scripts": {
     "data-migration:init": "ts-node ./prisma/migrations/20240609162555_init/data-migration.ts",
     "deploy-vpn-config": "ts-node deploy_vpn_config.ts",
+    "deploy-port-forwarding-config": "ts-node deploy_port_forwarding_config.ts",
+    "deploy-dhcp-config": "ts-node deploy_dhcp_config.ts",
     "update-ip-group": "ts-node update_ip_group.ts",
     "update-vpn-rules": "ts-node update_vpn_rules.ts",
     "scan": "ts-node scan.ts",
