@@ -10,6 +10,7 @@
     "deploy-dhcp-config": "ts-node deploy_dhcp_config.ts",
     "update-ip-group": "ts-node update_ip_group.ts",
     "update-vpn-rules": "ts-node update_vpn_rules.ts",
+    "vpn-domains": "ts-node vpn_domains.ts",
     "scan": "ts-node scan.ts",
     "qos": "ts-node qos.ts"
   },
@@ -19,6 +20,7 @@
     "@prisma/client": "5.15.0",
     "dotenv": "^16.4.5",
     "ipaddr.js": "^2.2.0",
+    "is-valid-domain": "^0.1.6",
     "simple-ssh": "^1.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"

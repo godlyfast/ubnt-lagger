@@ -41,7 +41,7 @@ const cmd = (names: string[], lastRuleNumber: number = 151) =>
   names.forEach(async (name) => {
     if (co.indexOf(`address-group ${name}`) > -1) {
       let re = new RegExp(
-        String.raw`rule([1-9]*){destination{group{address-group${name}}}modify{lb-group${LB_GROUP}}}`,
+        String.raw`rule([0-9]*){destination{group{address-group${name}}}modify{lb-group${LB_GROUP}}}`,
         "g"
       );
       const sanitized = co.replaceAll(" ", "").replaceAll("\n", "");
