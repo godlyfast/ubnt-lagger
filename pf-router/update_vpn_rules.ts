@@ -12,9 +12,7 @@ if (!LB_GROUP) {
 const cmd = (names: string[], lastRuleNumber: number = 151) =>
   names
     .map(
-      (name, i) => `
-        /config/scripts/set_rules.sh ${lastRuleNumber + i} ${name} V
-    `
+      (name, i) => `/config/scripts/set_rules.sh ${lastRuleNumber + i} ${name} V`
     )
     .join(" && ");
 
@@ -41,7 +39,7 @@ const cmd = (names: string[], lastRuleNumber: number = 151) =>
   const namesToCreate: string[] = [];
   const existingNames: { ruleNumber: string; name: string }[] = [];
   names.forEach(async (name) => {
-    if (co.includes(`address-group ${name}`)) {
+    if (co.indexOf(`address-group ${name}`) > -1) {
       let re = new RegExp(
         String.raw`rule([1-9]*){destination{group{address-group${name}}}modify{lb-group${LB_GROUP}}}`,
         "g"
@@ -52,12 +50,13 @@ const cmd = (names: string[], lastRuleNumber: number = 151) =>
         .matchAll(re);
       if (matches) {
         const [text, ruleNumber] = matches;
-        // console.log(name, " Rule ID:", ruleNumber, text);
         existingNames.push({ ruleNumber, name });
+      } else {
+        console.log("Will add address-group for", name);
+        namesToCreate.push(name);
       }
     } else {
-      console.log("No address-group found for", name);
-      // commands.push(cmd([name]));
+      console.log("Will add address-group for", name);
       namesToCreate.push(name);
     }
   });
@@ -67,12 +66,15 @@ const cmd = (names: string[], lastRuleNumber: number = 151) =>
     return;
   }
 
-  const latestRuleNumber = Math.max(
+  const latestRuleNumber = existingNames.length > 0 ? Math.max(
     ...existingNames.map(({ ruleNumber }) => parseInt(ruleNumber))
-  );
+  ): 150;
 
-  const { stderr, stdout } = await run(
-    cmd(namesToCreate, latestRuleNumber + 1)
-  );
+
+  const cmdStr = cmd(namesToCreate, latestRuleNumber + 1);
+
+  console.log("Will run command:", cmdStr);
+
+  const { stderr, stdout } = await run(cmdStr);
   console.log(stdout, stderr);
 })();
