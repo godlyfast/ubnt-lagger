@@ -92,11 +92,6 @@ async function removeDomains(domains: string[]) {
       console.log(`Deleted ${domain} domain and its IPs`);
     })
   );
-
-  // const r = await prisma.domainName.deleteMany({
-  //   where: { name: { in: domains } },
-  // });
-  // console.log(`Deleted ${r.count} domains`);
 }
 
 (async () => {
