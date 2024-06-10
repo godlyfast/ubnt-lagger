@@ -44,10 +44,8 @@ const cmd = (names: string[], lastRuleNumber: number = 151) =>
         String.raw`rule([1-9]*){destination{group{address-group${name}}}modify{lb-group${LB_GROUP}}}`,
         "g"
       );
-      const [matches] = co
-        .replaceAll(" ", "")
-        .replaceAll("\n", "")
-        .matchAll(re);
+      const sanitized = co.replaceAll(" ", "").replaceAll("\n", "");
+      const [matches] = sanitized.matchAll(re);
       if (matches) {
         const [text, ruleNumber] = matches;
         existingNames.push({ ruleNumber, name });
