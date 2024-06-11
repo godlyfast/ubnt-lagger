@@ -110,7 +110,7 @@ process.argv[2] === "ips" &&
         });
       })
     );
-    
+
     const orphans = await prisma.ipRecord.findMany({
       where: {
         domainNames: {
@@ -138,4 +138,10 @@ process.argv[2] === "ips" &&
         },
       });
     }
+    const rr = await prisma.ipRecord.findMany({include: {domainNames: true}});
+    rr.forEach((r) => {
+      if (r.domainNames.length > 1) {
+        console.log("Multi ip rec found:", r.ip, r.domainNames);
+      }
+    });
   })();
