@@ -5,14 +5,14 @@
   "main": "index.ts",
   "scripts": {
     "data-migration:init": "ts-node ./prisma/migrations/20240609162555_init/data-migration.ts",
-    "deploy-vpn-config": "ts-node deploy_vpn_config.ts",
-    "deploy-port-forwarding-config": "ts-node deploy_port_forwarding_config.ts",
-    "deploy-dhcp-config": "ts-node deploy_dhcp_config.ts",
-    "update-ip-group": "ts-node update_ip_group.ts",
-    "update-vpn-rules": "ts-node update_vpn_rules.ts",
-    "vpn-domains": "ts-node vpn_domains.ts",
-    "scan": "ts-node scan.ts",
-    "qos": "ts-node qos.ts"
+    "deploy-vpn-config": "ts-node src/vpn/deploy_vpn_config.ts",
+    "deploy-port-forwarding-config": "ts-node src/deploy_port_forwarding_config.ts",
+    "deploy-dhcp-config": "ts-node src/deploy_dhcp_config.ts",
+    "update-ip-group": "ts-node src/vpn/update_ip_group.ts",
+    "update-vpn-rules": "ts-node src/vpn/update_vpn_rules.ts",
+    "vpn-domains": "ts-node src/vpn/vpn_domains.ts",
+    "scan": "ts-node src/vpn/scan.ts",
+    "qos": "ts-node src/qos/index.ts"
   },
   "author": "",
   "license": "ISC",

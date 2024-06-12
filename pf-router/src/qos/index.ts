@@ -1,4 +1,4 @@
-import { run } from "./run";
+import { run } from "../common/run";
 
 const fullDellCmd = `
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin 

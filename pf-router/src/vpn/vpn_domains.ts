@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import isValidDomain from "is-valid-domain";
-import { run } from "./run";
+import { run } from "../common/run";
+import { response } from '../common/response';
 
 const LB_GROUP = process.env.LB_GROUP;
 
@@ -95,16 +96,26 @@ async function removeDomains(domains: string[]) {
 }
 
 (async () => {
-  console.log("Action:", action);
-  console.log("Domains:", domains);
-  switch (action) {
-    case "add":
-      await addDomains(domains);
-      break;
-    case "remove":
-      await removeDomains(domains);
-      break;
-    default:
-      console.log("Unknown action:", action);
+  try {
+    switch (action) {
+      case "list":
+        const domainNames = await prisma.domainName.findMany();
+        response.domains = (domainNames.map((dn) => dn.name));
+        process.exit(0);
+        break;
+      case "add":
+        console.log("Domains:", domains);
+        await addDomains(domains);
+        break;
+      case "remove":
+        await removeDomains(domains);
+        break;
+      default:
+        console.error("Unknown action:", action);
+        process.exit(1);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    process.exit(1);
   }
 })();
