@@ -1,7 +1,10 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import isValidDomain from "is-valid-domain";
 import { run } from "../common/run";
 import { response } from '../common/response';
+
+console.log(process.env.DATABASE_URL);
 
 const LB_GROUP = process.env.LB_GROUP;
 

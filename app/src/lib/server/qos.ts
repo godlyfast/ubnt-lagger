@@ -47,7 +47,7 @@ export const showConfigWithEntriesPopulated = async () => {
 };
 
 export async function showConfig() {
-  let { outData, errData, exitCode } = await execute(["showConfig"]);
+  let { outData, errData, exitCode } = await execute(["qos", "showConfig"]);
 
   return {
     outData,
@@ -61,6 +61,7 @@ export async function fullInstall(
   set: { ip: string; upSpeed: number; downSpeed: number }[]
 ) {
   const args = [
+    "qos",
     "fullInstall",
     ...set.map(
       ({ ip, upSpeed, downSpeed }) =>
@@ -91,6 +92,7 @@ export async function lagIp({
   oldUpSpeed: number;
 }) {
   const { outData, errData, exitCode } = await execute([
+    "qos",
     "lagIp",
     upQueueId.toString(),
     oldUpSpeed.toString(),
@@ -108,7 +110,7 @@ export async function lagIp({
 }
 
 export async function fullDell() {
-  const { outData, errData, exitCode } = await execute(["fullDell"]);
+  const { outData, errData, exitCode } = await execute(["qos", "fullDell"]);
 
   return {
     outData,
