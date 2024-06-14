@@ -1,4 +1,4 @@
-import { getEntries } from "$lib/qos";
+import { getEntries } from "$lib/client/qos";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, fetch }) => {

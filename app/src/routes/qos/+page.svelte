@@ -1,6 +1,6 @@
 <script lang="ts">
   import JSONTree from "svelte-json-tree";
-  import { lagIp, fullDell, fullInstall, showConfig, getEntries } from "$lib/qos";
+  import { lagIp, fullDell, fullInstall, showConfig, getEntries } from "$lib/client/qos";
   import type { PageData } from "./$types";
   import { onMount } from "svelte";
 

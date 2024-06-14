@@ -10,6 +10,24 @@ export async  function getDomains(): Promise<string[]> {
     return domains;
 }
 
+export async function addDomains(domains: string[]) {
+    const {outData, errData} = await execute(["vpn-domains", "add", ...domains]);
+    if (errData) {
+        console.error("addDomains error ", outData);
+        console.error(errData);
+    }
+    return outData;
+}
+
+export async function removeDomains(domains: string[]) {
+    const {outData, errData} = await execute(["vpn-domains", "remove", ...domains]);
+    if (errData) {
+        console.error("removeDomains error ", outData);
+        console.error(errData);
+    }
+    return outData;
+}
+
 export async  function scanUpdate() {
     // yarn scan ips
     // yarn update-ip-group
