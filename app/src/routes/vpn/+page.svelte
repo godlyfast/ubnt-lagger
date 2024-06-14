@@ -8,6 +8,7 @@
 
   const scanUpdate = async () => {
     requestInProcess = true;
+    outputLog = [];
     const res = await fetch("/api/vpn/scan-update", {
         method: "POST",
         headers: {
