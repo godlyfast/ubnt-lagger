@@ -32,8 +32,7 @@ export const run = (cmd: string) =>
           stderr += chunk;
         },
         exit: function (code) {
-          ssh.reset();
-          resolve({ stdout, stderr, code });
+          ssh.reset(() => resolve({ stdout, stderr, code }));
         },
       })
       .start();
