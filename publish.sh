@@ -11,8 +11,9 @@ then
 else
       echo "No old Images found"
 fi
+# Build for linux/amd64 (server architecture) using multi-stage build
 docker build . --platform linux/amd64 -t $DOCKER_REPOSITORY_IP:$DOCKER_REPOSITORY_PORT/shms:latest
 IMAGE_ID=$(docker images --format="{{.Repository}} {{.ID}}" | grep "^$DOCKER_REPOSITORY_IP:$DOCKER_REPOSITORY_PORT/shms " | cut -d' ' -f2)
 echo IMAGE $IMAGE_ID
 docker tag $IMAGE_ID $DOCKER_REPOSITORY_IP:$DOCKER_REPOSITORY_PORT/shms:latest
-docker image push $DOCKER_REPOSITORY_IP:$DOCKER_REPOSITORY_PORT/shms:latest
+docker image push --tls-verify=false $DOCKER_REPOSITORY_IP:$DOCKER_REPOSITORY_PORT/shms:latest

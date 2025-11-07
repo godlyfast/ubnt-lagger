@@ -1,7 +1,7 @@
 export async function getDomains(fetch: typeof window.fetch) {
   const r = await fetch(`/api/vpn/domains`);
   const { data } = await r.json();
-  return { entries: data };
+  return { entries: data || [] };
 }
 
 export async function addDomains(fetch: typeof window.fetch, domains: string[]) {
