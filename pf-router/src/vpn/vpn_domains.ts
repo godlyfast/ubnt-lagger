@@ -5,10 +5,15 @@ import { run } from "../common/run";
 import { response } from '../common/response';
 
 const LB_GROUP = process.env.LB_GROUP;
+const DEST_VPN_REQUIRED = process.env.DEST_VPN_REQUIRED;
+const SRC_VPN_REQUIRED = process.env.SRC_VPN_REQUIRED;
 
 if (!LB_GROUP) {
   throw new Error("LB_GROUP is not defined");
 }
+
+// These are special internal group names, not real domains
+const INTERNAL_GROUPS = [DEST_VPN_REQUIRED, SRC_VPN_REQUIRED].filter(Boolean);
 
 const prisma = new PrismaClient();
 
@@ -101,7 +106,10 @@ async function removeDomains(domains: string[]) {
     switch (action) {
       case "list":
         const domainNames = await prisma.domainName.findMany();
-        response.domains = (domainNames.map((dn) => dn.name));
+        // Filter out internal group names that are not real domains
+        response.domains = domainNames
+          .map((dn) => dn.name)
+          .filter((name) => !INTERNAL_GROUPS.includes(name));
         process.exit(0);
         break;
       case "add":
