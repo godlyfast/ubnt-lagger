@@ -1,4 +1,4 @@
-#!/bin/vbash                                                                       
+#!/bin/vbash
 
 START=0
 END=$(($1))
@@ -19,8 +19,8 @@ echo "Checking tunnel $i"
 
 if [ "$(show interfaces | grep vtun$i)" != '' ] ; then echo "Tunnel $i is online"; continue; fi;
 
-set interfaces openvpn vtun$i config-file /config/auth/US-NY-ovpn-udp.ovpn;
-set interfaces openvpn vtun$i description 'PUREVPN USA NY UDP Tunnel';
+set interfaces openvpn vtun$i config-file /config/auth/PL-ovpn-udp.ovpn;
+set interfaces openvpn vtun$i description 'PUREVPN PL UDP Tunnel';
 TOADD=$((TOADD+1));
 
 done

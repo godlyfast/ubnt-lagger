@@ -5,6 +5,11 @@ import "dotenv/config";
 const FIREWALL_GROUP = process.env.DEST_VPN_REQUIRED;
 const VPN_USERS = process.env.SRC_VPN_REQUIRED;
 const LB_GROUP = process.env.LB_GROUP;
+const MAIN_GROUP = process.env.MAIN_GROUP;
+
+if (!MAIN_GROUP) {
+    throw new Error("MAIN_GROUP is not defined");
+}
 
 if (!FIREWALL_GROUP) {
     throw new Error("FIREWALL_GROUP is not defined");
@@ -21,7 +26,7 @@ if (!LB_GROUP) {
 const conf = () => `
 sudo chmod +x /config/scripts/connect-vpn.sh
 
-/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin 
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper begin
 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper delete system task-scheduler task vpn
 
@@ -121,6 +126,8 @@ sudo chmod +x /config/scripts/connect-vpn.sh
 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set firewall modify balance rule 150 modify lb-group ${LB_GROUP}
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set firewall modify balance rule 150 source group address-group ${VPN_USERS}
+
+/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set firewall modify balance rule 250 modify lb-group ${MAIN_GROUP}
 
 /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper set interfaces ethernet eth1 firewall in modify balance
 
