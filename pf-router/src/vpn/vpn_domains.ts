@@ -85,18 +85,42 @@ async function removeDomains(domains: string[]) {
       console.log(delOut2);
       console.log("Deleted address-group", domain);
       try {
+        // Get the domain and its associated IPs before deletion
         const rr = await prisma.domainName.delete({
           where: { name: domain },
           include: { ipRecords: true },
         });
-        await prisma.ipRecord.deleteMany({
-          where: { id: { in: rr.ipRecords.map((ip) => ip.id) } },
-        });
+
+        // Check each IP to see if it's still used by other domains
+        const orphanedIpIds: string[] = [];
+        for (const ipRecord of rr.ipRecords) {
+          // Count how many domains still reference this IP
+          const remainingDomains = await prisma.domainName.count({
+            where: {
+              ipRecords: {
+                some: { id: ipRecord.id }
+              }
+            }
+          });
+
+          // If no domains reference this IP anymore, it's orphaned
+          if (remainingDomains === 0) {
+            orphanedIpIds.push(ipRecord.id);
+          }
+        }
+
+        // Only delete IPs that are no longer used by any domain
+        if (orphanedIpIds.length > 0) {
+          await prisma.ipRecord.deleteMany({
+            where: { id: { in: orphanedIpIds } },
+          });
+          console.log(`Deleted ${orphanedIpIds.length} orphaned IPs`);
+        }
       } catch (error) {
         // console.error(error);
       }
 
-      console.log(`Deleted ${domain} domain and its IPs`);
+      console.log(`Deleted ${domain} domain`);
     })
   );
 }
